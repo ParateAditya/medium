@@ -9,10 +9,10 @@ type Env = {
   Bindings: {
     DATABASE_URL: string;
     JWT_SECRET: string;
-  },
-  Variables : {
-        userId: string
-    }
+  };
+  Variables: {
+    userId: string;
+  };
 };
 
 export const userRoutes = new Hono<Env>();
@@ -22,46 +22,54 @@ userRoutes.post("/signup", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const body = await c.req.json();
-  const { success } = signUpBody.safeParse(body);
+  try {
+    const body = await c.req.json();
+    const { success } = signUpBody.safeParse(body);
 
-  if (!success) {
-    c.status(401);
+    if (!success) {
+      c.status(400);
+      return c.json({
+        error: "email, name and password expected",
+      });
+    }
+
+    const findOne = await prisma.user.findFirst({
+      where: {
+        email: body.email,
+      },
+    });
+
+    if (findOne) {
+      c.status(401);
+      return c.json({
+        error: "already exists",
+      });
+    }
+
+    const response = await prisma.user.create({
+      data: {
+        name: body.name,
+        password: body.password,
+        email: body.email,
+      },
+    });
+
+    const token = await sign({ id: response.id }, c.env.JWT_SECRET);
+
+    return c.json(
+      {
+        token,
+      },
+      200
+    );
+  } catch (error) {
+    console.error(error); // Log the error for debugging
+
+    c.status(500); // 500 Internal Server Error
     return c.json({
-      error: "username password and firstName expected",
+      error: "Internal server error",
     });
   }
-
-  const findOne = await prisma.user.findFirst({
-    where: {
-      email: body.email,
-    },
-  });
-
-  if (findOne) {
-    c.status(401);
-    return c.json({
-      error: "already exists",
-    });
-  }
-
-  const response = await prisma.user.create({
-    data: {
-      name: body.name,
-      password: body.password,
-      email: body.email,
-    },
-  });
-
-  const token = await sign({ id: response.id }, c.env.JWT_SECRET);
-
-  return c.json(
-    {
-      ...response,
-      token,
-    },
-    200
-  );
 });
 
 userRoutes.post("/signin", async (c) => {
@@ -69,28 +77,39 @@ userRoutes.post("/signin", async (c) => {
     datasourceUrl: c.env?.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const body = await c.req.json();
-  const { success } = signInBody.safeParse(body);
+  try {
+    const body = await c.req.json();
+    const { success } = signInBody.safeParse(body);
 
-  if (!success) {
-    c.status(401);
-    return c.json({
-      error: "username password and firstName expected",
+    if (!success) {
+      c.status(400);
+      return c.json({
+        error: "username password and firstName expected",
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        email: body.email,
+        password: body.password,
+      },
     });
-  }
-  
-  const user = await prisma.user.findUnique({
-    where: {
-      email: body.email,
-      password: body.password,
-    },
-  });
 
-  if (!user) {
-    c.status(403);
-    return c.json({ error: "user not found" });
-  }
+    if (!user) {
+      c.status(403);
+      return c.json({ error: "user not found" });
+    }
 
-  const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
-  return c.json({ jwt });
+    const token = await sign({ id: user.id }, c.env.JWT_SECRET);
+    return c.json({ token }, 200);
+  } catch (error) {
+    {
+      console.error(error); // Log the error for debugging
+
+      c.status(500); // 500 Internal Server Error
+      return c.json({
+        error: "Internal server error",
+      });
+    }
+  }
 });

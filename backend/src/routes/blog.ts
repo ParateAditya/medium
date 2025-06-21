@@ -17,24 +17,30 @@ type Env = {
 export const blogRouter = new Hono<Env>();
 
 blogRouter.use("/*", async (c, next) => {
-  const header = c.req.header("Authorization");
-  if (!header || !header.startsWith("Bearer ")) {
-    return c.json(
-      {
-        error: "Unauthorized",
-      },
-      403
-    );
+  try {
+    const header = c.req.header("Authorization");
+    if (!header || !header.startsWith("Bearer ")) {
+      return c.json(
+        {
+          error: "Unauthorized",
+        },
+        401
+      );
+    }
+    const token = header.split(" ")[1];
+    const payload = await verify(token, c.env.JWT_SECRET);
+    if (!payload.id) {
+      c.status(401);
+      return c.json({ error: "Unauthorized" });
+    }
+    // Attach userId to the context's variable for downstream handlers
+    (c as any).userId = payload.id;
+    await next();
+  } catch (error) {
+    console.error(error);
+    c.status(401); // 401 Unauthorized if there's an issue verifying the token
+    return c.json({ error: "Unauthorized" });
   }
-  const token = header.split(" ")[1];
-  const payload = await verify(token, c.env.JWT_SECRET);
-  if (!payload.id) {
-    c.status(401);
-    return c.json({ error: "unauthorized" });
-  }
-  // Attach userId to the context's variable for downstream handlers
-  (c as any).userId = payload.id;
-  await next();
 });
 
 blogRouter.post("/", async (c) => {
@@ -45,20 +51,25 @@ blogRouter.post("/", async (c) => {
   const userId = (c as any).userId;
   const body = await c.req.json();
 
-  const { success } = createPostBody.safeParse(body);
-  if (!success) {
-    return c.json({ error: "Invalid request body" }, 400);
+  try {
+    const { success } = createPostBody.safeParse(body);
+    if (!success) {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
+    const response = await prisma.post.create({
+      data: {
+        title: body.title,
+        content: body.content,
+        authorId: userId,
+      },
+    });
+
+    return c.json(response, 201);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    return c.json({ error: "Failed to create post" }, 500);
   }
-
-  const response = await prisma.post.create({
-    data: {
-      title: body.title,
-      content: body.content,
-      authorId: userId,
-    },
-  });
-
-  return c.json(response, 201);
 });
 
 blogRouter.put("/", async (c) => {
@@ -68,23 +79,39 @@ blogRouter.put("/", async (c) => {
 
   const body = await c.req.json();
   const userId = (c as any).userId;
-  const { success } = updatePostBody.safeParse(body);
-  if (!success) {
-    return c.json({ error: "Invalid request body" }, 400);
+  try {
+    const { success } = updatePostBody.safeParse(body);
+    if (!success) {
+      return c.json({ error: "Invalid request body" }, 400);
+    }
+
+    const response = await prisma.post.update({
+      where: {
+        id: body.id,
+      },
+      data: {
+        title: body.title,
+        content: body.content,
+      },
+    });
+
+    if (!response) {
+      return c.json({ error: "Post not found" }, 404);
+    }
+    return c.json(response, 200);
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as any).code === "P2025"
+    ) {
+      // Prisma error code for record not found
+      return c.json({ error: "Post not found" }, 404); // 404 Not Found if post doesn't exist
+    }
+    console.error(error);
+    return c.json({ error: "Failed to update post" }, 500); // 500 Internal Server Error
   }
-  
-
-  const response = await prisma.post.update({
-    where: {
-      id: body.id,
-    },
-    data: {
-      title: body.title,
-      content: body.content,
-    },
-  });
-
-  return c.json(response, 201);
 });
 
 blogRouter.get("/bulk", async (c) => {
@@ -92,10 +119,13 @@ blogRouter.get("/bulk", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const userId = (c as any).userId;
-
-  const response = await prisma.post.findMany();
-  return c.json(response, 201);
+  try {
+    const response = await prisma.post.findMany();
+    return c.json(response, 200); // 200 OK, even if the result is empty
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: "Failed to fetch posts" }, 500); // 500 Internal Server Error
+  }
 });
 
 blogRouter.get("/:id", async (c) => {
@@ -103,15 +133,20 @@ blogRouter.get("/:id", async (c) => {
     datasourceUrl: c.env.DATABASE_URL,
   }).$extends(withAccelerate());
 
-  const response = await prisma.post.findUnique({
-    where: {
-      id: c.req.param("id"),
-    },
-  });
+  try {
+    const response = await prisma.post.findUnique({
+      where: {
+        id: c.req.param("id"),
+      },
+    });
 
-  if (!response) {
-    return c.json({ error: "Post not found" }, 404);
-  } else {
-    return c.json(response, 201);
+    if (!response) {
+      return c.json({ error: "Post not found" }, 404); // 404 Not Found if post doesn't exist
+    } else {
+      return c.json(response, 200); // 200 OK for successful fetch
+    }
+  } catch (error) {
+    console.error(error);
+    return c.json({ error: "Failed to fetch post" }, 500); // 500 Internal Server Error
   }
 });
