@@ -29,7 +29,7 @@ userRoutes.post("/signup", async (c) => {
     if (!success) {
       c.status(400);
       return c.json({
-        error: "email, name and password expected",
+        message: "email, name and password expected",
       });
     }
 
@@ -42,7 +42,7 @@ userRoutes.post("/signup", async (c) => {
     if (findOne) {
       c.status(401);
       return c.json({
-        error: "already exists",
+        message: "email already exists",
       });
     }
 
@@ -67,7 +67,7 @@ userRoutes.post("/signup", async (c) => {
 
     c.status(500); // 500 Internal Server Error
     return c.json({
-      error: "Internal server error",
+      message: "Internal server error",
     });
   }
 });
@@ -84,7 +84,7 @@ userRoutes.post("/signin", async (c) => {
     if (!success) {
       c.status(400);
       return c.json({
-        error: "username password and firstName expected",
+        message: "username password and firstName expected",
       });
     }
 
@@ -97,7 +97,7 @@ userRoutes.post("/signin", async (c) => {
 
     if (!user) {
       c.status(403);
-      return c.json({ error: "user not found" });
+      return c.json({ message: "Invalid credentials ! " });
     }
 
     const token = await sign({ id: user.id }, c.env.JWT_SECRET);
@@ -108,7 +108,7 @@ userRoutes.post("/signin", async (c) => {
 
       c.status(500); // 500 Internal Server Error
       return c.json({
-        error: "Internal server error",
+        message: "Internal server error",
       });
     }
   }

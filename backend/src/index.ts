@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { userRoutes } from "./routes/user";
 import { blogRouter } from "./routes/blog";
+import { cors } from "hono/cors";
 
 type Env = {
   Bindings: {
@@ -13,6 +14,7 @@ type Env = {
 };
 
 const app = new Hono<Env>();
+app.use('/api/*', cors())
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");
