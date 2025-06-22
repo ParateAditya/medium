@@ -75,59 +75,59 @@ export const Auth = ({ type }: { type: "SignIn" | "SignUp" }) => {
                         <div>
                             <span className="font-medium">Error : </span> {Error}
                         </div>
-                    </div>    
+                    </div>
 
                 }
-                        <div className="flex flex-col items-center  p-4">
-                            <div className="text-4xl font-extrabold p-2 ">
-                                {type === "SignIn" ? "Login" : "Create an Account"}
-                            </div>
-                            <div className="text-xl font-normal">
-                                {
-                                    type === "SignUp" ? (
-                                        <>
-                                            Already have an account? <a href="/signin" className="text-blue-500 hover:underline">Login</a>
-                                        </>
-                                    ) : (
-                                        <>
-                                            Don't have an account? <a href="/signup" className="text-blue-500 hover:underline">SignUp</a>
-                                        </>
-                                    )
-                                }
-                            </div>
-
-                        </div>
-                        <div className=" sm:mx-auto sm:w-full sm:max-w-sm">
-
-                            {type === "SignUp" && <LabelledInput label="Name" placeholder="xyz123" type="text" onChange={e => setName(e.target.value)} />}
-                            <LabelledInput label="Email" placeholder="xyz@example.com" type="email" onChange={e => setEmail(e.target.value)} />
-
-                            <LabelledInput label="Password" placeholder="*********" type="password" onChange={e => setPassword(e.target.value)} />
-                            <div className="m-5 mt-10">
-                                <button type="submit" className="flex w-full justify-center rounded-md bg-slate-900 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-slate-200 hover:text-black hover:font-extrabold  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={type === "SignIn" ? signInReq : signUpReq} >{type === "SignIn" ? <>Sign In</> : <>Sign Up</>}</button>
-                            </div>
-                        </div>
-
-
+                <div className="flex flex-col items-center  p-4">
+                    <div className="text-4xl font-extrabold p-2 ">
+                        {type === "SignIn" ? "Login" : "Create an Account"}
                     </div>
-        </>
-            )
+                    <div className="text-xl font-normal">
+                        {
+                            type === "SignUp" ? (
+                                <>
+                                    Already have an account? <a href="/signin" className="text-blue-500 hover:underline">Login</a>
+                                </>
+                            ) : (
+                                <>
+                                    Don't have an account? <a href="/signup" className="text-blue-500 hover:underline">SignUp</a>
+                                </>
+                            )
+                        }
+                    </div>
 
-}
-            type LabelledInputProps = {
-                label: string;
-            placeholder?: string;
-            onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-                type: string;
-}
+                </div>
+                <div className=" sm:mx-auto sm:w-full sm:max-w-sm">
 
-                function LabelledInput({label, placeholder, onChange, type}: LabelledInputProps) {
-    return (
-                <div className=" text-xl font-bold m-5">
-                    <label className="">{label}</label>
-                    <div className="mt-2 ">
-                        <input onChange={onChange} type={type} placeholder={placeholder} required className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-slate-600 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600  border border-slate-500" />
+                    {type === "SignUp" && <LabelledInput label="Name" placeholder="xyz123" type="text" onChange={e => setName(e.target.value)} />}
+                    <LabelledInput label="Email" placeholder="xyz@example.com" type="email" onChange={e => setEmail(e.target.value)} />
+
+                    <LabelledInput label="Password" placeholder="*********" type="password" onChange={e => setPassword(e.target.value)} />
+                    <div className="m-5 mt-10">
+                        <button type="submit" className="flex w-full justify-center rounded-md bg-slate-900 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-slate-200 hover:text-black hover:font-extrabold  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" onClick={type === "SignIn" ? signInReq : signUpReq} >{type === "SignIn" ? <>Sign In</> : <>Sign Up</>}</button>
                     </div>
                 </div>
-                )
+
+
+            </div>
+        </>
+    )
+
+}
+type LabelledInputProps = {
+    label: string;
+    placeholder?: string;
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    type: string;
+}
+
+function LabelledInput({ label, placeholder, onChange, type }: LabelledInputProps) {
+    return (
+        <div className=" text-xl font-bold m-5">
+            <label className="">{label}</label>
+            <div className="mt-2 ">
+                <input onChange={onChange} type={type} placeholder={placeholder} required className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-slate-600 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600  border border-slate-500" />
+            </div>
+        </div>
+    )
 }
