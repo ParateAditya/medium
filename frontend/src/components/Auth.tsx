@@ -9,7 +9,6 @@ export const Auth = ({ type }: { type: "SignIn" | "SignUp" }) => {
     const [Name, setName] = useState("");
     const [Email, setEmail] = useState("");
     const [Password, setPassword] = useState("");
-
     useEffect(() => {
         if (Error) {
             const timer = setTimeout(() => {
@@ -33,6 +32,7 @@ export const Auth = ({ type }: { type: "SignIn" | "SignUp" }) => {
             const jwt = response.data.token;
             localStorage.setItem("token", jwt);
             navigate("/blog");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             setError(error?.response?.data?.message || "Failed to sign in");
         }
@@ -54,6 +54,7 @@ export const Auth = ({ type }: { type: "SignIn" | "SignUp" }) => {
             const jwt = response.data.token;
             localStorage.setItem("token", jwt);
             navigate("/blog");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.log(error);
             setError(error?.response?.data?.message || "Failed to sign in");
