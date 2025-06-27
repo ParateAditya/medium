@@ -120,7 +120,18 @@ blogRouter.get("/bulk", async (c) => {
   }).$extends(withAccelerate());
 
   try {
-    const response = await prisma.post.findMany();
+    const response = await prisma.post.findMany({
+      select: {
+        title: true,
+        content: true,
+        id: true,
+        author: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
     return c.json(response, 200); // 200 OK, even if the result is empty
   } catch (error) {
     console.error(error);
@@ -137,6 +148,16 @@ blogRouter.get("/:id", async (c) => {
     const response = await prisma.post.findUnique({
       where: {
         id: c.req.param("id"),
+      },
+      select: {
+        title: true,
+        content: true,
+        id: true,
+        author: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 

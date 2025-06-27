@@ -113,3 +113,45 @@ userRoutes.post("/signin", async (c) => {
     }
   }
 });
+
+userRoutes.get("/", async (c) => {
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env?.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  try {
+    const header = c.req.header("Authorization");
+    if (!header || !header.startsWith("Bearer ")) {
+      return c.json(
+        {
+          error: "Unauthorized",
+        },
+        401
+      );
+    }
+    const token = header.split(" ")[1];
+    const payload = await verify(token, c.env.JWT_SECRET);
+    if (!payload.id) {
+      c.status(401);
+      return c.json({ error: "Unauthorized" });
+    }
+
+    const response = await prisma.user.findFirst({
+      where: {
+        id: payload.id,
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    return c.json(response, 200);
+  } catch (e) {
+    console.error(e); // Log the error for debugging
+
+    c.status(500); // 500 Internal Server Error
+    return c.json({
+      message: "Internal server error",
+    });
+  }
+});
