@@ -1,4 +1,4 @@
-# Medium Clone
+# Blogging Website
 
 A full-stack blogging platform inspired by Medium, built with modern web technologies.
 
